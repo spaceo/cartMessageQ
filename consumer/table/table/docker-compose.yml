@@ -1,0 +1,53 @@
+version: '2'
+services:
+  nginx:
+    build: nginx
+    depends_on:
+      - fpm
+    ports:
+      - "80:80"
+    volumes_from:
+      - fpm
+
+  fpm:
+    image: miksan/alpine-php
+    ports:
+      - "2323:22"
+      - "9000:9000"
+    volumes:
+      - "$PWD:/app"
+      - "/usr/bin/php:/usr/bin/php"
+    depends_on:
+      - mysql
+    links:
+      - rabbitmq:rabbitmq
+
+
+  redis:
+    image: redis:3.2-alpine
+
+  mysql:
+    image: mysql:5.7
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=ddd
+    volumes:
+      - db_data:/var/lib/mysql
+
+  composer:
+    image: composer/composer
+    volumes_from:
+      - fpm
+    working_dir: /app
+
+  rabbitmq:
+    image: rabbitmq:3.6.1-management
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+
+
+volumes:
+  db_data:
